@@ -35,9 +35,10 @@ GREEN = {
     "leaf":    "#B7E4C7",   # surfaces
 }
 # Ordered sequence for categorical charts (all green family)
-GREEN_SEQ = ["#2D6A4F", "#52B788", "#95D5B2", "#74C69D", "#40916C", "#B7E4C7"]
-# Continuous green scale
-GREEN_SCALE = [[0, "#D8F3DC"], [0.5, "#52B788"], [1, "#1B4332"]]
+GREEN_SEQ = ["#2D6A4F", "#52B788", "#40916C", "#74C69D", "#1B4332", "#95D5B2"]
+# Continuous green scale — floor kept at a visible mid-green (not near-white)
+# so the smallest bars/cells never wash into the page background.
+GREEN_SCALE = [[0, "#74C69D"], [0.5, "#40916C"], [1, "#1B4332"]]
 
 st.markdown(f"""
 <style>
@@ -110,7 +111,7 @@ st.markdown(f"""
 PLOTLY_LAYOUT = dict(
     font=dict(family="Plus Jakarta Sans", color=GREEN["darkest"], size=13),
     paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(255,255,255,0.55)",
+    plot_bgcolor="#FFFFFF",
     margin=dict(t=60, l=20, r=20, b=20),
     title=dict(font=dict(size=18, color=GREEN["darkest"])),
 )
@@ -380,7 +381,7 @@ elif page == "🎫 Class & Fares":
         st.markdown("### How many trips per class?")
         cc = df["Class_Type"].value_counts()
         fig = px.bar(x=cc.index, y=cc.values, text=cc.values,
-                     color=cc.index, color_discrete_sequence=[GREEN["dark"], GREEN["light"]])
+                     color=cc.index, color_discrete_sequence=[GREEN["dark"], GREEN["base"]])
         fig.update_traces(textposition="outside")
         fig.update_layout(showlegend=False, height=420, title="Ticket class comparison")
         style_fig(fig, ytitle="Number of Trips")
@@ -390,7 +391,8 @@ elif page == "🎫 Class & Fares":
         st.markdown("### Share of each class")
         fig = go.Figure(go.Pie(
             labels=cc.index, values=cc.values, hole=0.45,
-            marker=dict(colors=[GREEN["dark"], GREEN["lighter"]]),
+            marker=dict(colors=[GREEN["dark"], GREEN["base"]],
+                        line=dict(color="white", width=2)),
             textinfo="label+percent", textfont=dict(size=15, color="white")))
         fig.update_layout(showlegend=False, height=420, title="Class distribution",
                           **{k:v for k,v in PLOTLY_LAYOUT.items() if k!="title"})
@@ -443,7 +445,7 @@ elif page == "🔗 Distance ↔ Price":
                   .first().reset_index())
         fig = px.bar(band, x="Distance_KM", y="Total_Fare_SAR", color="Class_Type",
                      barmode="group", text="Total_Fare_SAR",
-                     color_discrete_sequence=[GREEN["light"], GREEN["dark"]])
+                     color_discrete_sequence=[GREEN["base"], GREEN["dark"]])
         fig.update_traces(textposition="outside")
         fig.update_layout(height=420, title="Fare by distance & class",
                           legend_title="Class")
@@ -540,7 +542,7 @@ elif page == "🗺️ Stations & Routes":
     logis = df["Logistics_Note"].value_counts()
     fig = px.bar(x=logis.index, y=logis.values, text=logis.values,
                  color=logis.index,
-                 color_discrete_sequence=[GREEN["dark"], GREEN["light"]])
+                 color_discrete_sequence=[GREEN["dark"], GREEN["base"]])
     fig.update_traces(textposition="outside")
     fig.update_layout(height=380, showlegend=False, title="Trip type breakdown")
     style_fig(fig, ytitle="Number of Trips")
@@ -582,7 +584,7 @@ elif page == "📅 Seasonality":
     mak = df[df["Arrival_Station"]=="Makkah"].copy()
     mak_daily = mak.groupby(mak["Trip_Date"].dt.to_period("W").dt.start_time).size()
     fig = px.area(x=mak_daily.index, y=mak_daily.values)
-    fig.update_traces(line_color=GREEN["dark"], fillcolor="rgba(82,183,136,0.35)")
+    fig.update_traces(line_color=GREEN["dark"], fillcolor="rgba(82,183,136,0.55)")
     fig.update_layout(height=360, title="Weekly arrivals into Makkah")
     style_fig(fig, ytitle="Trips", xtitle="Week")
     st.plotly_chart(fig, use_container_width=True)
@@ -607,7 +609,7 @@ elif page == "⏱️ Trip Duration":
         st.markdown("### Duration spread (box plot)")
         fig = go.Figure(go.Box(y=df["Time_taken"], name="Time taken",
                                marker_color=GREEN["dark"],
-                               fillcolor="rgba(82,183,136,0.4)"))
+                               fillcolor="rgba(82,183,136,0.55)"))
         fig.update_layout(height=420, title="Trip duration distribution")
         style_fig(fig, ytitle="Minutes")
         st.plotly_chart(fig, use_container_width=True)
@@ -672,7 +674,8 @@ elif page == "💺 Occupancy & Seats":
         seats = df["Seat_Status"].value_counts()
         fig = go.Figure(go.Pie(
             labels=seats.index, values=seats.values, hole=0.45,
-            marker=dict(colors=[GREEN["dark"], GREEN["light"], GREEN["lighter"]]),
+            marker=dict(colors=[GREEN["dark"], GREEN["mid"], GREEN["base"]],
+                        line=dict(color="white", width=2)),
             textinfo="label+percent", textfont=dict(size=14, color="white")))
         fig.update_layout(height=420, title="Seat status distribution", showlegend=False,
                           **{k:v for k,v in PLOTLY_LAYOUT.items() if k!="title"})
@@ -695,7 +698,7 @@ elif page == "💺 Occupancy & Seats":
     pivot = df.pivot_table(values="Total_Fare_SAR", index="Arrival_Station",
                            columns="Class_Type", aggfunc="mean").round(0)
     fig = px.bar(pivot, barmode="group", text_auto=".0f",
-                 color_discrete_sequence=[GREEN["dark"], GREEN["light"]])
+                 color_discrete_sequence=[GREEN["dark"], GREEN["base"]])
     fig.update_traces(textposition="outside")
     fig.update_layout(height=420, title="Average fare per destination by class",
                       legend_title="Class")
